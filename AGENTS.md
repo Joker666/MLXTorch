@@ -1,5 +1,5 @@
 **Project**: MLXTorch
-**Goal**: Implement a minimal deep learning framework inspired by PyTorch. It must run on Apple Silicon using the MLX framework. It should support tensor operations, autograd, simple neural network layers, optimizers, loss functions, basic datasets, and a small training loop.
+**Goal**: Implement a minimal deep learning framework inspired by PyTorch. It must run on Apple Silicon using the MLX framework. It should support tensor operations, autograd, simple neural network layers, optimizers, loss functions, basic datasets, and a small training loop. All library code lives under the `mlxtorch/` package directory.
 
 ## Shared Conventions
 
@@ -22,7 +22,7 @@ Design and implement the foundational Tensor class. It wraps `mlx.core.array`, t
 
 **Tasks**
 
-1. Create `tensor.py`.
+1. Create `mlxtorch/tensor.py`.
 2. Implement `class Tensor` with fields: `data`, `grad`, `requires_grad`, `_backward`, `_prev`.
 3. Implement elementwise ops: add, sub, mul, div, pow.
 4. Implement matrix ops: matmul, transpose.
@@ -34,7 +34,7 @@ Design and implement the foundational Tensor class. It wraps `mlx.core.array`, t
 
 **Deliverables**
 
-* `tensor.py`
+* `mlxtorch/tensor.py`
 * `tests/test_tensor.py`
 
 ---
@@ -55,7 +55,7 @@ Build the autograd engine for Tensor. Execute backward passes, handle topologica
 
 **Deliverables**
 
-* Updates to `tensor.py`
+* Updates to `mlxtorch/tensor.py`
 * `tests/test_autograd.py`
 
 ---
@@ -67,9 +67,9 @@ Implement a tiny neural network module system inspired by PyTorch's `nn`.
 
 **Tasks**
 
-1. Create `nn/module.py` with a base `Module` class.
+1. Create `mlxtorch/nn/module.py` with a base `Module` class.
 2. Implement `parameters()` and `zero_grad()`.
-3. Create common layers in `nn/layers.py`:
+3. Create common layers in `mlxtorch/nn/layers.py`:
 
    * Linear
    * ReLU
@@ -80,7 +80,7 @@ Implement a tiny neural network module system inspired by PyTorch's `nn`.
 
 **Deliverables**
 
-* `nn/` folder with `module.py` and `layers.py`
+* `mlxtorch/nn/` folder with `module.py` and `layers.py`
 * `tests/test_layers.py`
 
 ---
@@ -92,15 +92,15 @@ Implement a small set of optimizers similar to PyTorch.
 
 **Tasks**
 
-1. Create `optim/sgd.py` with basic SGD and momentum.
-2. Create `optim/adam.py` with minimal Adam implementation.
+1. Create `mlxtorch/optim/sgd.py` with basic SGD and momentum.
+2. Create `mlxtorch/optim/adam.py` with minimal Adam implementation.
 3. Optimizers accept a list of parameters and update them in place.
 4. Add learning rate, weight decay, and beta configs.
 5. Add unit tests.
 
 **Deliverables**
 
-* `optim/` folder with optimizer implementations
+* `mlxtorch/optim/` folder with optimizer implementations
 * `tests/test_optim.py`
 
 ---
@@ -112,14 +112,14 @@ Implement a small standard set of loss functions.
 
 **Tasks**
 
-1. Create `losses.py`.
+1. Create `mlxtorch/losses.py`.
 2. Implement MSELoss.
 3. Implement CrossEntropyLoss using logits and integer class labels.
 4. Add unit tests.
 
 **Deliverables**
 
-* `losses.py`
+* `mlxtorch/losses.py`
 * `tests/test_losses.py`
 
 ---
@@ -131,15 +131,15 @@ Implement a simple dataset and dataloader system.
 
 **Tasks**
 
-1. Create `data/dataset.py` with a `Dataset` base class.
-2. Create `data/dataloader.py` with a basic iterator.
+1. Create `mlxtorch/data/dataset.py` with a `Dataset` base class.
+2. Create `mlxtorch/data/dataloader.py` with a basic iterator.
 3. Add shuffle and batch size.
 4. Work with numpy arrays and produce MLXTorch tensors.
 5. Add a toy dataset for testing.
 
 **Deliverables**
 
-* `data/` folder
+* `mlxtorch/data/` folder
 * `tests/test_data.py`
 
 ---
@@ -151,7 +151,7 @@ Assemble a small training loop and example script to demonstrate MLXTorch.
 
 **Tasks**
 
-1. Create `train.py`.
+1. Create `mlxtorch/train.py`.
 2. Write a minimal training workflow:
 
    * Build model
@@ -165,7 +165,7 @@ Assemble a small training loop and example script to demonstrate MLXTorch.
 
 **Deliverables**
 
-* `train.py`
+* `mlxtorch/train.py`
 
 ---
 
@@ -176,8 +176,8 @@ Prepare the project so it can be installed and used like a micro library.
 
 **Tasks**
 
-1. Add `__init__.py` files.
-2. Write `setup.py` or pyproject.
+1. Add `mlxtorch/__init__.py` plus nested `__init__.py` files for each subpackage.
+2. Write `pyproject.toml` (or `setup.py`/`setup.cfg` if preferred).
 3. Include a README.
 4. Include installation instructions and MLXTorch philosophy.
 5. Add version string.

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable, Set, Union
+from typing import Any, Callable, Union
 
 import mlx.core as mx
 
@@ -41,13 +41,13 @@ class Tensor:
         data: TensorLike,
         requires_grad: bool = False,
         _backward: Callable[[], None] | None = None,
-        _prev: Iterable["Tensor"] | None = None,
+        _prev: list["Tensor"] | None = None,
     ) -> None:
         self.data: mx.array = _ensure_array(data)
         self.grad: mx.array | None = None
         self.requires_grad = requires_grad
         self._backward: Callable[[], None] = _backward or (lambda: None)
-        self._prev: Set["Tensor"] = set(_prev) if _prev is not None else set()
+        self._prev: set["Tensor"] = set(_prev) if _prev is not None else set()
 
     def __repr__(self) -> str:  # pragma: no cover - string repr is trivial
         return f"Tensor(data={self.data}, requires_grad={self.requires_grad})"
@@ -65,7 +65,7 @@ class Tensor:
         out = Tensor(
             self.data + other_tensor.data,
             requires_grad=self.requires_grad or other_tensor.requires_grad,
-            _prev=(self, other_tensor),
+            _prev=[self, other_tensor],
         )
 
         def _backward() -> None:
@@ -93,7 +93,7 @@ class Tensor:
         out = Tensor(
             self.data * other_tensor.data,
             requires_grad=self.requires_grad or other_tensor.requires_grad,
-            _prev=(self, other_tensor),
+            _prev=[self, other_tensor],
         )
 
         def _backward() -> None:
@@ -117,7 +117,7 @@ class Tensor:
         out = Tensor(
             self.data / other_tensor.data,
             requires_grad=self.requires_grad or other_tensor.requires_grad,
-            _prev=(self, other_tensor),
+            _prev=[self, other_tensor],
         )
 
         def _backward() -> None:
@@ -140,7 +140,7 @@ class Tensor:
         out = Tensor(
             self.data**power,
             requires_grad=self.requires_grad,
-            _prev=(self,),
+            _prev=[self],
         )
 
         def _backward() -> None:
@@ -161,7 +161,7 @@ class Tensor:
         out = Tensor(
             mx.matmul(self.data, other_tensor.data),
             requires_grad=self.requires_grad or other_tensor.requires_grad,
-            _prev=(self, other_tensor),
+            _prev=[self, other_tensor],
         )
 
         def _backward() -> None:
@@ -188,7 +188,7 @@ class Tensor:
         out = Tensor(
             mx.transpose(self.data, axes=axes),
             requires_grad=self.requires_grad,
-            _prev=(self,),
+            _prev=[self],
         )
 
         def _backward() -> None:
@@ -218,7 +218,7 @@ class Tensor:
         out = Tensor(
             mx.sum(self.data, axis=axis, keepdims=keepdims),
             requires_grad=self.requires_grad,
-            _prev=(self,),
+            _prev=[self],
         )
 
         def _backward() -> None:
@@ -243,7 +243,7 @@ class Tensor:
         out = Tensor(
             mx.mean(self.data, axis=axis, keepdims=keepdims),
             requires_grad=self.requires_grad,
-            _prev=(self,),
+            _prev=[self],
         )
 
         def _backward() -> None:
@@ -271,7 +271,7 @@ class Tensor:
     def _topological_sort(self) -> list[Tensor]:
         """Return nodes in topological order from this tensor downward."""
         topo: list[Tensor] = []
-        visited: Set[Tensor] = set()
+        visited: set[Tensor] = set()
 
         def build(node: Tensor) -> None:
             if node not in visited:

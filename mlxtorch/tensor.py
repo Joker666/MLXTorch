@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable, Optional, Set, Tuple, Union
+from typing import Any, Callable, Iterable, Set, Union
 
 import mlx.core as mx
 
-Arrayable = Union[mx.array, float, int, bool, list[Any], tuple[Any, ...]]
+Arrayable = mx.array | float | int | bool | list[Any] | tuple[Any, ...]
 TensorLike = Union[Arrayable, "Tensor"]
 
 
@@ -17,7 +17,7 @@ def _ensure_array(data: TensorLike) -> mx.array:
     return mx.array(data)
 
 
-def _match_shape(grad: mx.array, shape: Tuple[int, ...]) -> mx.array:
+def _match_shape(grad: mx.array, shape: tuple[int, ...]) -> mx.array:
     """Sum gradient to match a broadcasted shape."""
     if grad.shape == shape:
         return grad
@@ -40,11 +40,11 @@ class Tensor:
         self,
         data: TensorLike,
         requires_grad: bool = False,
-        _backward: Optional[Callable[[], None]] = None,
-        _prev: Optional[Iterable["Tensor"]] = None,
+        _backward: Callable[[], None] | None = None,
+        _prev: Iterable["Tensor"] | None = None,
     ) -> None:
         self.data: mx.array = _ensure_array(data)
-        self.grad: Optional[mx.array] = None
+        self.grad: mx.array | None = None
         self.requires_grad = requires_grad
         self._backward: Callable[[], None] = _backward or (lambda: None)
         self._prev: Set["Tensor"] = set(_prev) if _prev is not None else set()
@@ -60,7 +60,7 @@ class Tensor:
             self.grad = self.grad + grad
 
     # ---- arithmetic operations ----
-    def __add__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __add__(self, other: Tensor | Arrayable) -> Tensor:
         other_tensor = other if isinstance(other, Tensor) else Tensor(other)
         out = Tensor(
             self.data + other_tensor.data,
@@ -79,16 +79,16 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def __radd__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __radd__(self, other: Tensor | Arrayable) -> Tensor:
         return self + other
 
-    def __sub__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __sub__(self, other: Tensor | Arrayable) -> Tensor:
         return self + (-1 * other)
 
-    def __rsub__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __rsub__(self, other: Tensor | Arrayable) -> Tensor:
         return (-1 * self) + other
 
-    def __mul__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __mul__(self, other: Tensor | Arrayable) -> Tensor:
         other_tensor = other if isinstance(other, Tensor) else Tensor(other)
         out = Tensor(
             self.data * other_tensor.data,
@@ -109,10 +109,10 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def __rmul__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __rmul__(self, other: Tensor | Arrayable) -> Tensor:
         return self * other
 
-    def __truediv__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __truediv__(self, other: Tensor | Arrayable) -> Tensor:
         other_tensor = other if isinstance(other, Tensor) else Tensor(other)
         out = Tensor(
             self.data / other_tensor.data,
@@ -133,10 +133,10 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def __rtruediv__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __rtruediv__(self, other: Tensor | Arrayable) -> Tensor:
         return Tensor(other) / self
 
-    def __pow__(self, power: Union[int, float]) -> "Tensor":
+    def __pow__(self, power: int | float) -> Tensor:
         out = Tensor(
             self.data**power,
             requires_grad=self.requires_grad,
@@ -152,11 +152,11 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def __neg__(self) -> "Tensor":
+    def __neg__(self) -> Tensor:
         return self * -1
 
     # ---- matrix operations ----
-    def matmul(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def matmul(self, other: Tensor | Arrayable) -> Tensor:
         other_tensor = other if isinstance(other, Tensor) else Tensor(other)
         out = Tensor(
             mx.matmul(self.data, other_tensor.data),
@@ -177,13 +177,13 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def __matmul__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __matmul__(self, other: Tensor | Arrayable) -> Tensor:
         return self.matmul(other)
 
-    def __rmatmul__(self, other: Union["Tensor", Arrayable]) -> "Tensor":
+    def __rmatmul__(self, other: Tensor | Arrayable) -> Tensor:
         return Tensor(other).matmul(self)
 
-    def transpose(self, axes: Optional[Tuple[int, ...]] = None) -> "Tensor":
+    def transpose(self, axes: tuple[int, ...] | None = None) -> Tensor:
         """Transpose tensor."""
         out = Tensor(
             mx.transpose(self.data, axes=axes),
@@ -194,7 +194,7 @@ class Tensor:
         def _backward() -> None:
             if out.grad is None or not self.requires_grad:
                 return
-            inv_axes: Optional[Tuple[int, ...]]
+            inv_axes: tuple[int, ...] | None
             if axes is None:
                 inv_axes = None
             else:
@@ -208,12 +208,12 @@ class Tensor:
         return out
 
     @property
-    def T(self) -> "Tensor":
+    def T(self) -> Tensor:
         """Shorthand for transpose with axes reversed."""
         return self.transpose()
 
     # ---- reduction operations ----
-    def sum(self, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> "Tensor":
+    def sum(self, axis: int | tuple[int, ...] | None = None, keepdims: bool = False) -> Tensor:
         """Sum elements over axis."""
         out = Tensor(
             mx.sum(self.data, axis=axis, keepdims=keepdims),
@@ -238,7 +238,7 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def mean(self, axis: Optional[Union[int, Tuple[int, ...]]] = None, keepdims: bool = False) -> "Tensor":
+    def mean(self, axis: int | tuple[int, ...] | None = None, keepdims: bool = False) -> Tensor:
         """Mean over axis."""
         out = Tensor(
             mx.mean(self.data, axis=axis, keepdims=keepdims),
@@ -268,7 +268,7 @@ class Tensor:
         return out
 
     # ---- autograd ----
-    def _topological_sort(self) -> list["Tensor"]:
+    def _topological_sort(self) -> list[Tensor]:
         """Return nodes in topological order from this tensor downward."""
         topo: list[Tensor] = []
         visited: Set[Tensor] = set()
@@ -283,7 +283,7 @@ class Tensor:
         build(self)
         return topo
 
-    def backward(self, grad: Optional[TensorLike] = None) -> None:
+    def backward(self, grad: TensorLike | Arrayable | None = None) -> None:
         """Run backpropagation from this tensor, accumulating gradients."""
         topo = self._topological_sort()
         for node in topo:
@@ -314,17 +314,17 @@ def tensor(data: Arrayable, requires_grad: bool = False) -> Tensor:
     return Tensor(data, requires_grad=requires_grad)
 
 
-def zeros(shape: Tuple[int, ...], requires_grad: bool = False) -> Tensor:
+def zeros(shape: tuple[int, ...], requires_grad: bool = False) -> Tensor:
     """Create a zero tensor."""
     return Tensor(mx.zeros(shape), requires_grad=requires_grad)
 
 
-def ones(shape: Tuple[int, ...], requires_grad: bool = False) -> Tensor:
+def ones(shape: tuple[int, ...], requires_grad: bool = False) -> Tensor:
     """Create an all-ones tensor."""
     return Tensor(mx.ones(shape), requires_grad=requires_grad)
 
 
-def randn(shape: Tuple[int, ...], requires_grad: bool = False, mean: float = 0.0, std: float = 1.0) -> Tensor:
+def randn(shape: tuple[int, ...], requires_grad: bool = False, mean: float = 0.0, std: float = 1.0) -> Tensor:
     """Create a tensor with samples from a normal distribution."""
     data = mx.random.normal(shape=shape, loc=mean, scale=std)
     return Tensor(data, requires_grad=requires_grad)

@@ -15,6 +15,16 @@ def test_add_and_backward():
     assert mx.allclose(b.grad, mx.ones_like(b.data))
 
 
+def test_subtraction_with_python_list_and_grad():
+    x = tensor([1.0, 2.0, 3.0], requires_grad=True)
+    y = x - [0.5, 1.0, 1.5]
+    total = y.sum()
+    total.backward()
+
+    assert mx.allclose(y.data, mx.array([0.5, 1.0, 1.5]))
+    assert mx.allclose(x.grad, mx.ones_like(x.data))
+
+
 def test_mul_div_backward():
     x = tensor([2.0, 4.0], requires_grad=True)
     y = tensor([3.0, 1.5], requires_grad=True)
@@ -66,6 +76,18 @@ def test_sum_and_mean_backward():
     x.zero_grad()
     m.backward()
     assert mx.allclose(x.grad, mx.ones_like(x.data) * 0.25)
+
+    x = tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], requires_grad=True)
+    s_axis = x.sum(axis=0)
+    upstream = mx.ones_like(s_axis.data)
+    s_axis.backward(upstream)
+    assert mx.allclose(x.grad, mx.ones_like(x.data))
+
+    x.zero_grad()
+    m_axis = x.mean(axis=1)
+    m_axis.backward(mx.array([1.0, 2.0]))
+    expected = mx.array([[1.0 / 3.0] * 3, [2.0 / 3.0] * 3])
+    assert mx.allclose(x.grad, expected)
 
 
 def test_requires_grad_propagation():

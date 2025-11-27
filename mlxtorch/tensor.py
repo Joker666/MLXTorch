@@ -83,10 +83,12 @@ class Tensor:
         return self + other
 
     def __sub__(self, other: Tensor | Arrayable) -> Tensor:
-        return self + (-1 * other)
+        other_tensor = other if isinstance(other, Tensor) else Tensor(other)
+        return self + (-other_tensor)
 
     def __rsub__(self, other: Tensor | Arrayable) -> Tensor:
-        return (-1 * self) + other
+        other_tensor = other if isinstance(other, Tensor) else Tensor(other)
+        return other_tensor + (-self)
 
     def __mul__(self, other: Tensor | Arrayable) -> Tensor:
         other_tensor = other if isinstance(other, Tensor) else Tensor(other)

@@ -52,3 +52,40 @@ def test_branching_graph_accumulates_from_multiple_paths():
 
     assert x.grad is not None
     assert mx.allclose(x.grad, mx.array([3.0, 5.0]))
+
+
+def test_scalar_multiplier_broadcasts_gradients():
+    x = tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+    scale = tensor(2.0, requires_grad=True)
+    out = (x * scale).sum()
+    out.backward()
+
+    assert x.grad is not None
+    assert mx.allclose(x.grad, mx.ones_like(x.data) * 2.0)
+    assert scale.grad is not None
+    assert mx.allclose(scale.grad, mx.array(10.0))
+
+
+def test_shared_subgraph_propagates_through_all_paths():
+    a = tensor([1.0, 2.0], requires_grad=True)
+    b = a * 2.0
+    c = a + b
+    d = b * c  # 6 * a^2
+    loss = d.sum()
+    loss.backward()
+
+    expected = mx.array([12.0, 24.0])
+    assert a.grad is not None
+    assert mx.allclose(a.grad, expected)
+    assert b.grad is not None and c.grad is not None  # intermediate grads exist
+
+
+def test_no_grad_leaf_remains_none():
+    x = tensor([1.0, 2.0], requires_grad=True)
+    y = tensor([3.0, 4.0], requires_grad=False)
+    out = (x * y).sum()
+    out.backward()
+
+    assert x.grad is not None
+    assert mx.allclose(x.grad, y.data)
+    assert y.grad is None

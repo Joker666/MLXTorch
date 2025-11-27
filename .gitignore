@@ -1,0 +1,35 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Python packaging cache
+.eggs/
+
+# Test/coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+
+# macOS metadata
+.DS_Store
+
+# IDE/project files
+.vscode/
+.idea/
+
+# Generated data
+*.log
+
+# Local config
+.env

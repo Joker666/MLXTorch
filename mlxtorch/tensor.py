@@ -268,26 +268,40 @@ class Tensor:
         return out
 
     # ---- autograd ----
-    def backward(self, grad: Optional[mx.array] = None) -> None:
-        """Run backpropagation from this tensor."""
-        if grad is None:
-            if self.data.size != 1:
-                raise ValueError("grad must be specified for non-scalar outputs")
-            grad = mx.ones_like(self.data)
-        self.grad = grad
-
+    def _topological_sort(self) -> list["Tensor"]:
+        """Return nodes in topological order from this tensor downward."""
         topo: list[Tensor] = []
         visited: Set[Tensor] = set()
 
-        def build(v: Tensor) -> None:
-            if v not in visited:
-                visited.add(v)
-                for child in v._prev:
+        def build(node: Tensor) -> None:
+            if node not in visited:
+                visited.add(node)
+                for child in node._prev:
                     build(child)
-                topo.append(v)
+                topo.append(node)
 
         build(self)
+        return topo
+
+    def backward(self, grad: Optional[TensorLike] = None) -> None:
+        """Run backpropagation from this tensor, accumulating gradients."""
+        topo = self._topological_sort()
+        for node in topo:
+            if node._prev:
+                node.grad = None
+
+        if grad is None:
+            if self.data.size != 1:
+                raise ValueError("grad must be specified for non-scalar outputs")
+            grad_array = mx.ones_like(self.data)
+        else:
+            grad_array = _ensure_array(grad)
+
+        self._add_grad(grad_array)
+
         for node in reversed(topo):
+            if node.grad is None:
+                continue
             node._backward()
 
     def zero_grad(self) -> None:
